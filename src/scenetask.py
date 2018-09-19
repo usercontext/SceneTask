@@ -29,23 +29,36 @@ def firstordtrickle(tree):
         score[lev["name"]] = maxi
     return sorted(score.items(), key=operator.itemgetter(1), reverse=True)
 
-def secondordtrickle(tree):
-    score = {}
-    maxsc = 0
-    maxlab = None
-    for kk in labs:
-        for lev in tree["children"]:
-            try:
-                maxi = cosine_similarity(doc, lev["avg_embed"])
-            except:
-                maxi = 0
-            score[lev["name"]] = maxi
-        sorted(score.items(), key=operator.itemgetter(1), reverse=True)
-        if score[0][1] > maxsc:
-            maxsc = score[0][1]
-            maxlab = score[0][0]
-            # print(maxlab)
-    return (maxlab, maxsc)
+# def secondordtrickle(tree):
+#     global labs
+#     maxsc = 0
+#     maxlab = None
+#     for kk in labs:
+#         doc = nlp("".join(kk.split(','))).vector
+#         print(kk)
+#         score = {}
+#         try:
+#             for lev in tree["children"]:
+#                 if "avg_embed" in lev:
+#                     maxi = cosine_similarity(doc, lev["avg_embed"])
+#                 else:
+#                     maxi = cosine_similarity(doc, lev["personal_embed"])
+#                 # for key, value in lev.items():
+#                 #     print(key)
+#                 # print(maxi, lev["name"])
+#                 score[lev["name"]] = maxi
+
+#             score = sorted(score.items(), key=operator.itemgetter(1), reverse=True)
+
+#             if score[0][1] > maxsc:
+#                 maxsc = score[0][1]
+#                 maxlab = score[0][0]
+#                 print('--------------------')
+#                 print(score[1][0])
+#                 print(maxlab)
+#         except:
+#             pass
+#     return (maxlab, maxsc)
 
 
 def tree_construct(tree, doc, prev_score=[], relation=[], score_list=[]):
@@ -58,7 +71,7 @@ def tree_construct(tree, doc, prev_score=[], relation=[], score_list=[]):
             new_tree = (item for item in tree["children"] if item["name"] == score[0][0]).__next__()
             tree_construct(new_tree, doc, prev_score=score, relation=relation, score_list=score_list)
         else:
-            # print("Hellodfsalhasdjfhsjkdf", secondordtrickle(tree))
+            # secondordtrickle(tree)
             task_score = {}
             for kk in tree["content"]:
                 maxi = cosine_similarity(doc, nlp(kk["name"]).vector)
@@ -70,54 +83,56 @@ def tree_construct(tree, doc, prev_score=[], relation=[], score_list=[]):
         print(e)
         pass
 
-net = models.vgg16(pretrained=True)
+# net = models.vgg16(pretrained=True)
 
-normalize = transforms.Normalize(
-    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-preprocess = transforms.Compose([
-    transforms.Scale(256),
-    transforms.CenterCrop(224),
-    transforms.ToTensor(), normalize
-])
+# normalize = transforms.Normalize(
+#     mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+# preprocess = transforms.Compose([
+#     transforms.Scale(256),
+#     transforms.CenterCrop(224),
+#     transforms.ToTensor(), normalize
+# ])
 
-np.random.seed(0)
+# np.random.seed(0)
 
-img = Image.open('../resources/guitar.png')
-img_tensor = preprocess(img)
-img_tensor.unsqueeze_(0)
-img_tensor = img_tensor[:, :3, :, :]
+# img = Image.open('../resources/surf.png')
+# img_tensor = preprocess(img)
+# img_tensor.unsqueeze_(0)
+# img_tensor = img_tensor[:, :3, :, :]
 
-with open('../resources/labels.json', 'r') as f:
-    labeljson = json.load(f)
+# with open('../resources/labels.json', 'r') as f:
+#     labeljson = json.load(f)
 
-labels = {int(key):value for (key, value)
-          in labeljson.items()}
+# labels = {int(key):value for (key, value)
+#           in labeljson.items()}
 
-img_variable = Variable(img_tensor)
-fc_out = net(img_variable)
+# img_variable = Variable(img_tensor)
+# fc_out = net(img_variable)
 
-scorelist = fc_out.data.numpy()
-args = np.argsort(scorelist).flatten().tolist()
-scores = scorelist.flatten().tolist()
-j2 = sorted([i for i in scores], reverse=True)
+# scorelist = fc_out.data.numpy()
+# args = np.argsort(scorelist).flatten().tolist()
+# scores = scorelist.flatten().tolist()
+# j2 = sorted([i for i in scores], reverse=True)
 
-finlist = []
-for i in j2:
-    if i < 0.9*j2[0]:
-        break
-    finlist.append(i)
+# finlist = []
+# for i in j2:
+#     if i < 0.9*j2[0]:
+#         break
+#     finlist.append(i)
 
-limfac = len(finlist)
-print(finlist)
+# limfac = len(finlist)
+# print(finlist)
 
 
-top10 = [(labels[ind], scores[ind]) for ind in args[-1*limfac:]]
-labs = [i[0] for i in top10]
-print(top10)
+# top10 = [(labels[ind], scores[ind]) for ind in args[-1*limfac:]]
+# labs = [i[0] for i in top10]
+# print(top10)
 
-doc = np.zeros(300)
-for i in top10:
-    doc += i[1] * (nlp(i[0]).vector)
+# doc = np.zeros(300)
+# for i in top10:
+#     doc += i[1] * (nlp(i[0]).vector)
+
+doc = nlp('surfing surfboard').vector
 
 tree_instant = json.load(open('../resources/avg_embed.json'))
 
